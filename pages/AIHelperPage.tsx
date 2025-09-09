@@ -12,6 +12,22 @@ const ai = API_KEY ? new GoogleGenAI({ apiKey: API_KEY }) : null;
 
 const systemInstruction = `You are an expert AI assistant for students applying to universities abroad. Your name is 'GlobalEd AI'. Your knowledge covers application procedures, university requirements, major details, and visa processes for countries like the USA, UK, Canada, Australia, and top destinations in Europe and Asia. You must provide accurate, helpful, and encouraging advice. When asked for recommendations, always ask clarifying questions about the user's academic background (GPA, test scores), interests, and budget. You can also help draft and refine application essays, personal statements, and resumes. Format your responses clearly using markdown, such as lists and bold text, to improve readability.`;
 
+const MOCK_SOP_CONVERSATION_EN = [
+  { role: 'model', text: 'Hello! I am the GlobalEd AI assistant. Let\'s brainstorm for your Statement of Purpose. To start, what program are you applying for and at which university?' },
+  { role: 'user', text: 'I\'m applying for the Master of Science in Computer Science at Carnegie Mellon University.' },
+  { role: 'model', text: 'Excellent choice! CMU has a top-tier program. What specific areas within Computer Science are you most passionate about? Think about projects, research, or even specific courses you\'ve enjoyed.' },
+  { role: 'user', text: 'I\'m really interested in machine learning, specifically natural language processing. I built a sentiment analysis model for a class project last year and loved it.' },
+  { role: 'model', text: 'That\'s a great foundation! We can build a strong narrative around that. A good structure is:\n\n1.  **Introduction:** Hook the reader with your passion for NLP.\n2.  **Background:** Detail your sentiment analysis project and other relevant experiences.\n3.  **Why CMU:** Connect your interests to specific professors or labs at CMU (e.g., the Language Technologies Institute).\n4.  **Future Goals:** Explain how a CMU degree will help you achieve your career aspirations.\n\nHow does that sound as a starting point?' },
+];
+
+const MOCK_SOP_CONVERSATION_ZH = [
+   { role: 'model', text: '你好！我是 GlobalEd AI 助手。我们来一起为你的个人陈述进行头脑风暴吧。首先，请问你申请的是哪所大学的什么项目？' },
+   { role: 'user', text: '我正在申请卡内基梅隆大学的计算机科学硕士项目。' },
+   { role: 'model', text: '非常好的选择！CMU 的项目是顶尖的。在计算机科学领域，你对哪些具体方向最感兴趣？可以是你做过的项目、研究，或者你喜欢的课程。' },
+   { role: 'user', text: '我对机器学习，特别是自然语言处理（NLP）非常感兴趣。我去年为一门课程项目构建了一个情感分析模型，我非常喜欢那个过程。' },
+   { role: 'model', text: '这是一个很好的基础！我们可以围绕这一点构建一个强有力的叙述。一个好的个人陈述结构通常是：\n\n1.  **引言：** 用你对NLP的热情吸引读者。\n2.  **背景：** 详细描述你的情感分析项目和其他相关经历。\n3.  **为什么选择CMU：** 将你的兴趣与CMU的特定教授或实验室（例如，语言技术研究所 LTI）联系起来。\n4.  **未来目标：** 阐述CMU的学位将如何帮助你实现职业抱负。\n\n这个结构作为起点，你觉得怎么样？' },
+];
+
 
 const TypingIndicator = () => (
   <div className="flex items-center space-x-2">
@@ -89,8 +105,6 @@ const AIHelperPage = ({ lang }) => {
     if (chatContainer) {
       const isNearBottom = chatContainer.scrollHeight - chatContainer.scrollTop - chatContainer.clientHeight < 150;
       if (isNearBottom) {
-        // Using scrollTo is a more direct way to control the chat container's scroll position,
-        // ensuring the main page's scrollbar is not affected.
         chatContainer.scrollTo({
           top: chatContainer.scrollHeight,
           behavior: isLoading ? 'auto' : 'smooth',
@@ -98,6 +112,29 @@ const AIHelperPage = ({ lang }) => {
       }
     }
   }, [messages, isLoading]);
+  
+  const MOCK_CHAT_HISTORY = [
+    { id: 1, title: lang === 'zh' ? '美国CS硕士申请规划' : 'US CS Masters Application Plan' },
+    { id: 2, title: lang === 'zh' ? '个人陈述头脑风暴' : 'SOP Brainstorming Session' },
+    { id: 3, title: lang === 'zh' ? '英国G5金融专业对比' : 'UK G5 Finance Major Comparison' },
+    { id: 4, title: lang === 'zh' ? '如何准备托福考试' : 'How to Prepare for TOEFL' },
+    { id: 5, title: lang === 'zh' ? '加拿大签证材料清单' : 'Canada Visa Document Checklist' },
+  ];
+
+  const handleHistoryClick = (chatId) => {
+    setActiveChatId(chatId);
+    setError('');
+    setInput('');
+    if (chatId === 2) { // SOP Brainstorming Session
+      setMessages(lang === 'zh' ? MOCK_SOP_CONVERSATION_ZH : MOCK_SOP_CONVERSATION_EN);
+    } else {
+      const chatTitle = MOCK_CHAT_HISTORY.find(c => c.id === chatId)?.title || 'this chat';
+      const placeholderText = lang === 'zh' 
+        ? `这是关于“${chatTitle}”的过往对话占位符。在真实应用中，这里会加载完整的聊天记录。`
+        : `This is a placeholder for a past conversation about "${chatTitle}". In a real app, the full chat history would be loaded here.`;
+      setMessages([{ role: 'model', text: placeholderText }]);
+    }
+  };
 
   const handleNewChat = () => {
     setActiveChatId(null);
@@ -204,18 +241,9 @@ const AIHelperPage = ({ lang }) => {
   };
   const handleSuggestionClick = (prompt) => {
     setInput(prompt);
-    // Focus the textarea after setting the input
     const textarea = document.querySelector('textarea');
     if (textarea) textarea.focus();
   };
-
-  const MOCK_CHAT_HISTORY = [
-    { id: 1, title: lang === 'zh' ? '美国CS硕士申请规划' : 'US CS Masters Application Plan' },
-    { id: 2, title: lang === 'zh' ? '个人陈述头脑风暴' : 'SOP Brainstorming Session' },
-    { id: 3, title: lang === 'zh' ? '英国G5金融专业对比' : 'UK G5 Finance Major Comparison' },
-    { id: 4, title: lang === 'zh' ? '如何准备托福考试' : 'How to Prepare for TOEFL' },
-    { id: 5, title: lang === 'zh' ? '加拿大签证材料清单' : 'Canada Visa Document Checklist' },
-  ];
 
   return (
     <div className="container mx-auto px-6 py-8">
@@ -234,7 +262,7 @@ const AIHelperPage = ({ lang }) => {
                   <ul>
                       {MOCK_CHAT_HISTORY.map(chat => (
                           <li key={chat.id}>
-                              <a href="#" onClick={(e) => { e.preventDefault(); setActiveChatId(chat.id); }} className={`flex items-center px-3 py-2 text-sm rounded-md transition-colors ${activeChatId === chat.id ? 'bg-blue-100 text-blue-700 font-semibold' : 'text-slate-700 hover:bg-slate-200'}`}>
+                              <a href="#" onClick={(e) => { e.preventDefault(); handleHistoryClick(chat.id); }} className={`flex items-center px-3 py-2 text-sm rounded-md transition-colors ${activeChatId === chat.id ? 'bg-blue-100 text-blue-700 font-semibold' : 'text-slate-700 hover:bg-slate-200'}`}>
                                   <MessageSquare size={16} className="mr-3 text-slate-500"/>
                                   <span className="truncate">{chat.title}</span>
                               </a>
@@ -262,7 +290,7 @@ const AIHelperPage = ({ lang }) => {
           </div>
           
           <div className="bg-white p-4 border-t border-gray-200">
-              {messages.length <= 1 && (
+              {messages.length <= 1 && !activeChatId && (
               <div className="mb-3">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                   {suggestionPrompts[lang].map((prompt, i) => (
