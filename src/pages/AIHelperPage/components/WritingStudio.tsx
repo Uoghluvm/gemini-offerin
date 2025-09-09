@@ -1,7 +1,5 @@
-// FIX: Replaced placeholder content with a valid React component.
 import React from 'react';
 
-// FIX: Added props to accept the 'lang' property, fixing the type error in AIHelperPage.tsx.
 interface WritingStudioProps {
     lang: string;
 }
