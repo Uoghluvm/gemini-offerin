@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { User, MessageSquare, UserPlus, PlusCircle, CheckCircle, XCircle } from 'lucide-react';
-import { VerificationBadge } from '../App';
+import { VerificationBadge } from '../components/VerificationBadge';
 
 const MOCK_MENTOR_POSTS = [
     { id: 1, name: 'Alex Chen', avatar: 'https://picsum.photos/id/1005/200/200', university: 'Carnegie Mellon University', major: 'Machine Learning', verified: { name: true, school: true }, background: 'B.Eng from SJTU. Interned at Google & MSRA.', services: 'SOP review, technical interview prep, research matching.'},

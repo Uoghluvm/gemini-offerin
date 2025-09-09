@@ -15,9 +15,9 @@ const systemInstruction = `You are an expert AI assistant for students applying 
 
 const TypingIndicator = () => (
   <div className="flex items-center space-x-2">
-    <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-    <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
-    <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" style={{ animationDelay: '0.4s' }}></div>
+    <div className="w-2 h-2 bg-slate-500 rounded-full animate-pulse"></div>
+    <div className="w-2 h-2 bg-slate-500 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
+    <div className="w-2 h-2 bg-slate-500 rounded-full animate-pulse" style={{ animationDelay: '0.4s' }}></div>
   </div>
 );
 
@@ -34,24 +34,24 @@ const Message = ({ message, onAnalyzeRequest }) => {
   };
   
   return (
-    <div className={`flex items-start gap-4 my-4 ${isUser ? 'justify-end' : ''}`}>
+    <div className={`flex items-start gap-4 my-6 ${isUser ? 'justify-end' : ''}`}>
       {!isUser && (
-        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white flex-shrink-0">
+        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center text-white flex-shrink-0 shadow-md">
           <Bot size={24} />
         </div>
       )}
-      <div className={`max-w-2xl p-4 rounded-xl shadow-sm ${isUser ? 'bg-blue-500 text-white' : 'bg-white text-gray-800'}`}>
+      <div className={`max-w-2xl p-4 rounded-xl shadow-md ${isUser ? 'bg-blue-500 text-white rounded-br-none' : 'bg-white text-gray-800 rounded-bl-none border border-gray-100'}`}>
         <div className="prose prose-sm max-w-none">
           <Markdown remarkPlugins={[remarkGfm]}>{text}</Markdown>
         </div>
         {isModel && !isAnalyzing && text && (
-          <div className="mt-3 pt-2 border-t border-gray-200 flex items-center justify-between">
+          <div className="mt-3 pt-2 border-t border-gray-200/80 flex items-center justify-between">
             <div className="flex items-center space-x-3 text-gray-500">
-                <button onClick={() => onAnalyzeRequest('grammar', text)} className="flex items-center text-xs hover:text-blue-600"><SpellCheck size={14} className="mr-1"/> Check Grammar</button>
-                <button onClick={() => onAnalyzeRequest('originality', text)} className="flex items-center text-xs hover:text-blue-600"><Sparkles size={14} className="mr-1"/> Improve Originality</button>
+                <button onClick={() => onAnalyzeRequest('grammar', text)} className="flex items-center text-xs hover:text-blue-600 transition-colors"><SpellCheck size={14} className="mr-1"/> Check Grammar</button>
+                <button onClick={() => onAnalyzeRequest('originality', text)} className="flex items-center text-xs hover:text-blue-600 transition-colors"><Sparkles size={14} className="mr-1"/> Improve Originality</button>
             </div>
-             <button onClick={handleCopy} className="text-gray-400 hover:text-gray-700">
-                {copied ? <Check size={16} /> : <Clipboard size={16} />}
+             <button onClick={handleCopy} className="text-gray-400 hover:text-gray-700 transition-colors">
+                {copied ? <Check size={16} className="text-green-500" /> : <Clipboard size={16} />}
             </button>
           </div>
         )}
@@ -66,7 +66,7 @@ const Message = ({ message, onAnalyzeRequest }) => {
         )}
       </div>
       {isUser && (
-        <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 flex-shrink-0">
+        <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 flex-shrink-0 shadow-md">
           <User size={24} />
         </div>
       )}
@@ -81,20 +81,26 @@ const AIHelperPage = ({ lang }) => {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
+  const [activeChatId, setActiveChatId] = useState(1);
 
   useEffect(() => {
     const chatContainer = chatContainerRef.current;
     if (chatContainer) {
-        const isNearBottom = chatContainer.scrollHeight - chatContainer.scrollTop - chatContainer.clientHeight < 150;
-        if (isNearBottom) {
-            messagesEndRef.current?.scrollIntoView({ behavior: isLoading ? 'auto' : 'smooth' });
-        }
+      const isNearBottom = chatContainer.scrollHeight - chatContainer.scrollTop - chatContainer.clientHeight < 150;
+      if (isNearBottom) {
+        // Using scrollTo is a more direct way to control the chat container's scroll position,
+        // ensuring the main page's scrollbar is not affected.
+        chatContainer.scrollTo({
+          top: chatContainer.scrollHeight,
+          behavior: isLoading ? 'auto' : 'smooth',
+        });
+      }
     }
   }, [messages, isLoading]);
 
   const handleNewChat = () => {
+    setActiveChatId(null);
     setMessages([
         { role: 'model', text: lang === 'zh' ? '新的对话开始了！有什么可以帮你的吗？' : 'New chat started! How can I help?' }
     ]);
@@ -184,107 +190,117 @@ const AIHelperPage = ({ lang }) => {
 
   const suggestionPrompts = {
     en: [
-        "How can I find and contact a good mentor?",
-        "Help me brainstorm ideas for my Statement of Purpose",
-        "Recommend some US universities for a Computer Science Master's",
-        "What are the key differences between UK and US applications?",
+        "How can I find a good mentor?",
+        "Help brainstorm my Statement of Purpose",
+        "Recommend US universities for CompSci",
+        "Key differences: UK vs US applications?",
     ],
     zh: [
-        "我如何找到并联系一位合适的导师？",
-        "帮我为个人陈述找一些写作灵感",
-        "为我推荐一些美国的计算机科学硕士项目",
-        "英国和美国的大学申请有什么主要区别？"
+        "如何找到并联系一位合适的导师？",
+        "帮我为个人陈述找一些灵感",
+        "推荐美国的计算机科学硕士项目",
+        "英国和美国申请有什么主要区别？"
     ]
   };
-  const handleSuggestionClick = (prompt) => setInput(prompt);
+  const handleSuggestionClick = (prompt) => {
+    setInput(prompt);
+    // Focus the textarea after setting the input
+    const textarea = document.querySelector('textarea');
+    if (textarea) textarea.focus();
+  };
 
-  // Mock chat history
   const MOCK_CHAT_HISTORY = [
-    { id: 1, title: lang === 'zh' ? '美国CS硕士申请' : 'US CS Masters Application' },
-    { id: 2, title: lang === 'zh' ? '个人陈述头脑风暴' : 'SOP Brainstorming' },
-    { id: 3, title: lang === 'zh' ? '英国G5金融专业' : 'UK G5 Finance Major' },
+    { id: 1, title: lang === 'zh' ? '美国CS硕士申请规划' : 'US CS Masters Application Plan' },
+    { id: 2, title: lang === 'zh' ? '个人陈述头脑风暴' : 'SOP Brainstorming Session' },
+    { id: 3, title: lang === 'zh' ? '英国G5金融专业对比' : 'UK G5 Finance Major Comparison' },
+    { id: 4, title: lang === 'zh' ? '如何准备托福考试' : 'How to Prepare for TOEFL' },
+    { id: 5, title: lang === 'zh' ? '加拿大签证材料清单' : 'Canada Visa Document Checklist' },
   ];
 
   return (
-    <div className="container mx-auto my-4 h-[calc(100vh-140px)] flex bg-white shadow-xl rounded-lg overflow-hidden">
-      {/* Sidebar */}
-      <div className="w-1/4 bg-gray-50 border-r flex flex-col">
-        <div className="p-4 border-b">
-           <button onClick={handleNewChat} className="w-full flex items-center justify-center bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 text-sm font-semibold">
-               <PlusCircle size={16} className="mr-2"/>
-               {lang === 'zh' ? '新的对话' : 'New Chat'}
-           </button>
-        </div>
-        <div className="flex-1 overflow-y-auto">
-            <nav className="p-2">
-                <ul>
-                    {MOCK_CHAT_HISTORY.map(chat => (
-                        <li key={chat.id}>
-                            <a href="#" className="flex items-center px-3 py-2 text-sm text-gray-700 rounded-md hover:bg-gray-200">
-                                <MessageSquare size={16} className="mr-3 text-gray-500"/>
-                                <span className="truncate">{chat.title}</span>
-                            </a>
-                        </li>
-                    ))}
-                </ul>
-            </nav>
-        </div>
-      </div>
-      
-      {/* Main Chat Area */}
-      <div className="w-3/4 flex flex-col">
-        <div className="p-4 border-b flex items-center space-x-3 bg-white">
-            <BrainCircuit size={24} className="text-blue-600" />
-            <h1 className="text-xl font-bold text-gray-800">{lang === 'zh' ? 'AI 留学助手' : 'AI Study Abroad Helper'}</h1>
-        </div>
-        <div ref={chatContainerRef} className="flex-1 p-6 overflow-y-auto bg-gray-100/50">
-            {messages.map((msg, index) => (
-            <Message key={index} message={msg} onAnalyzeRequest={handleAnalyzeRequest} />
-            ))}
-            {isLoading && messages[messages.length-1].role === 'user' && <div className="flex items-start gap-4 my-4">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white flex-shrink-0"><Bot size={24}/></div>
-                <div className="p-4 rounded-xl shadow-sm bg-white text-gray-800"><TypingIndicator /></div>
-            </div>}
-            <div ref={messagesEndRef} />
+    <div className="container mx-auto px-6 py-8">
+      <div className="flex bg-white shadow-xl rounded-lg overflow-hidden border border-gray-200/80" style={{ height: 'calc(100vh - 8.5rem)', maxHeight: '900px' }}>
+        {/* Sidebar */}
+        <div className="w-1/4 bg-slate-50 border-r border-slate-200 flex flex-col">
+          <div className="p-4 border-b border-slate-200">
+            <button onClick={handleNewChat} className="w-full flex items-center justify-center bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 text-sm font-semibold transition-colors shadow-sm hover:shadow-md">
+                <PlusCircle size={16} className="mr-2"/>
+                {lang === 'zh' ? '新的对话' : 'New Chat'}
+            </button>
+          </div>
+          <div className="flex-1 overflow-y-auto">
+              <nav className="p-2">
+                  <h3 className="px-3 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">{lang === 'zh' ? '最近的对话' : 'Recent Chats'}</h3>
+                  <ul>
+                      {MOCK_CHAT_HISTORY.map(chat => (
+                          <li key={chat.id}>
+                              <a href="#" onClick={(e) => { e.preventDefault(); setActiveChatId(chat.id); }} className={`flex items-center px-3 py-2 text-sm rounded-md transition-colors ${activeChatId === chat.id ? 'bg-blue-100 text-blue-700 font-semibold' : 'text-slate-700 hover:bg-slate-200'}`}>
+                                  <MessageSquare size={16} className="mr-3 text-slate-500"/>
+                                  <span className="truncate">{chat.title}</span>
+                              </a>
+                          </li>
+                      ))}
+                  </ul>
+              </nav>
+          </div>
         </div>
         
-        <div className="bg-white p-4 border-t">
-            {messages.length <= 1 && (
-            <div className="mb-3">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                {suggestionPrompts[lang].map((prompt, i) => (
-                    <button key={i} onClick={() => handleSuggestionClick(prompt)} className="text-left p-3 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm text-gray-700 transition-colors">
-                    {prompt}
-                    </button>
-                ))}
-                </div>
-            </div>
-            )}
+        {/* Main Chat Area */}
+        <div className="w-3/4 flex flex-col">
+          <div className="p-4 border-b border-slate-200 flex items-center space-x-3 bg-slate-50/50">
+              <BrainCircuit size={24} className="text-blue-600" />
+              <h1 className="text-xl font-bold text-gray-800">{lang === 'zh' ? 'AI 留学助手' : 'AI Study Abroad Helper'}</h1>
+          </div>
+          <div ref={chatContainerRef} className="flex-1 p-6 overflow-y-auto bg-slate-100">
+              {messages.map((msg, index) => (
+              <Message key={index} message={msg} onAnalyzeRequest={handleAnalyzeRequest} />
+              ))}
+              {isLoading && messages[messages.length-1].role === 'user' && <div className="flex items-start gap-4 my-6">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center text-white flex-shrink-0 shadow-md"><Bot size={24}/></div>
+                  <div className="p-4 rounded-xl shadow-md bg-white text-gray-800 rounded-bl-none"><TypingIndicator /></div>
+              </div>}
+          </div>
+          
+          <div className="bg-white p-4 border-t border-gray-200">
+              {messages.length <= 1 && (
+              <div className="mb-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  {suggestionPrompts[lang].map((prompt, i) => (
+                      <button key={i} onClick={() => handleSuggestionClick(prompt)} className="text-left p-3 bg-slate-100 hover:bg-slate-200/70 rounded-lg text-sm text-slate-700 transition-colors flex items-center">
+                        <Sparkles size={16} className="mr-3 text-blue-500 flex-shrink-0"/>
+                        <span>{prompt}</span>
+                      </button>
+                  ))}
+                  </div>
+              </div>
+              )}
 
-            {error && <p className="mb-2 text-red-500 text-sm">{error}</p>}
-            <div className="flex items-center bg-gray-100 rounded-lg p-2">
-            <textarea
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    handleSend();
-                }
-                }}
-                placeholder={lang === 'zh' ? '在这里输入你的问题...' : 'Type your question here...'}
-                className="flex-1 bg-transparent p-2 focus:outline-none resize-none"
-                rows={1}
-                disabled={isLoading}
-            />
-            <button
-                onClick={handleSend}
-                disabled={isLoading || input.trim() === ''}
-                className="bg-blue-600 text-white p-2 rounded-lg disabled:bg-blue-300 disabled:cursor-not-allowed hover:bg-blue-700 transition-colors"
-            >
-                <Send size={20} />
-            </button>
-            </div>
+              {error && <p className="mb-2 text-red-500 text-sm">{error}</p>}
+              <div className="flex items-center bg-white border border-slate-300 rounded-xl p-1 shadow-sm focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-transparent">
+              <textarea
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSend();
+                  }
+                  }}
+                  placeholder={lang === 'zh' ? '在这里输入你的问题...' : 'Type your question here...'}
+                  className="flex-1 bg-transparent p-2 focus:outline-none resize-none"
+                  rows={1}
+                  disabled={isLoading}
+              />
+              <button
+                  onClick={handleSend}
+                  disabled={isLoading || input.trim() === ''}
+                  className="bg-blue-600 text-white p-2.5 rounded-lg disabled:bg-blue-300 disabled:cursor-not-allowed hover:bg-blue-700 transition-colors"
+                  aria-label="Send message"
+              >
+                  <Send size={20} />
+              </button>
+              </div>
+          </div>
         </div>
       </div>
     </div>
