@@ -102,7 +102,6 @@ export interface ChatMessage {
 export interface MessageData {
     role: 'user' | 'model';
     text: string;
-    isAnalyzing?: boolean;
     analysisResult?: {
         type: 'grammar' | 'originality';
         result: string;
