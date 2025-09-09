@@ -109,6 +109,13 @@ export interface MessageData {
     mentorRecommendation?: Mentor | null;
 }
 
+export interface Conversation {
+  id: string;
+  title: string;
+  messages: MessageData[];
+}
+
+
 export interface Review {
     id: number;
     reviewerName: string;

@@ -1,10 +1,10 @@
 import React from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { MOCK_MENTORS, MOCK_REVIEWS } from '../../lib/mockData';
-import { VerificationBadge } from '../../components/common/VerificationBadge';
-import StarRating from '../../components/common/StarRating';
+import { MOCK_MENTORS, MOCK_REVIEWS } from '../lib/mockData';
+import { VerificationBadge } from '../components/common/VerificationBadge';
+import StarRating from '../components/common/StarRating';
 import { ArrowLeft, MessageSquare, GraduationCap, Briefcase, Globe, Star, MessageCircle } from 'lucide-react';
-import { Review } from '../../types';
+import { Review } from '../types';
 
 interface MentorProfilePageProps {
   lang: string;
